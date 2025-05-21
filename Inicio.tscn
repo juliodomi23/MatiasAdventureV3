@@ -1,4 +1,4 @@
-[gd_scene load_steps=192 format=3 uid="uid://dkg4gflloe0nq"]
+[gd_scene load_steps=195 format=3 uid="uid://dkg4gflloe0nq"]
 
 [ext_resource type="Texture2D" uid="uid://ur8kkdkcwkfx" path="res://Cute_Fantasy/Tiles/Grass/Grass_Tiles_1.png" id="1_uloab"]
 [ext_resource type="Texture2D" uid="uid://1n0n0s2xytqj" path="res://Cute_Fantasy/Tiles/Grass/Grass_Tiles_1_Blob_TEST.png" id="2_ok7y7"]
@@ -48,9 +48,11 @@
 [ext_resource type="Texture2D" uid="uid://dp56r74a7417r" path="res://Cute_Fantasy/Enemies/Skeleton/Skeleton_Mage.png" id="46_ehuky"]
 [ext_resource type="Script" uid="uid://bj2ustc31pb0c" path="res://ingrediente1.gd" id="47_bql14"]
 [ext_resource type="Script" uid="uid://csm73nxh5q6qs" path="res://esqueleto.gd" id="48_5tpli"]
+[ext_resource type="Script" uid="uid://bssif7u5vosas" path="res://ingrediente_3.gd" id="48_26280"]
 [ext_resource type="Texture2D" uid="uid://dv8b0ou82ei2b" path="res://Cute_Fantasy/Enemies/Skeleton/Skeleton_Swordman.png" id="48_bql14"]
 [ext_resource type="Script" uid="uid://bqcdai04g5a7y" path="res://health_bar.gd" id="48_je0kn"]
 [ext_resource type="Script" uid="uid://bf3qd516adc48" path="res://detecion_area.gd" id="50_01gav"]
+[ext_resource type="Script" uid="uid://b4ynlwjq6a25c" path="res://spawn_area.gd" id="52_131q3"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6gn4e"]
 texture = ExtResource("1_uloab")
@@ -4496,6 +4498,7 @@ animations = [{
 [sub_resource type="CircleShape2D" id="CircleShape2D_25wlf"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pr0qq"]
+radius = 10.0499
 
 [sub_resource type="Theme" id="Theme_5tpli"]
 
@@ -4707,6 +4710,9 @@ radius = 86.3713
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_131q3"]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_26280"]
+size = Vector2(568, 154)
+
 [node name="MainScene" type="Node2D"]
 
 [node name="TileMap" type="TileMap" parent="."]
@@ -4738,7 +4744,7 @@ animation = &"Attack_Up"
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 position = Vector2(-1, 3)
-zoom = Vector2(2.625, 2.625)
+zoom = Vector2(2.515, 2.515)
 limit_left = -9999999
 position_smoothing_enabled = true
 script = ExtResource("40_ocw02")
@@ -4818,6 +4824,20 @@ texture = ExtResource("35_pr0qq")
 region_enabled = true
 region_rect = Rect2(32, 128, 16, 16)
 
+[node name="Ingrediente3" type="Area2D" parent="Ingredientes"]
+position = Vector2(319, 221)
+script = ExtResource("48_26280")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ingredientes/Ingrediente3"]
+position = Vector2(2, 0)
+shape = SubResource("CircleShape2D_pr0qq")
+
+[node name="Sprite2D" type="Sprite2D" parent="Ingredientes/Ingrediente3"]
+position = Vector2(2, 0)
+texture = ExtResource("35_pr0qq")
+region_enabled = true
+region_rect = Rect2(1, 112, 15, 16)
+
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="ContadorIngredientes" type="Label" parent="UI"]
@@ -4826,10 +4846,10 @@ anchor_left = 0.106
 anchor_top = 0.105
 anchor_right = 0.227
 anchor_bottom = 0.14
-offset_left = -0.112007
-offset_top = -0.0400009
-offset_right = -0.504028
-offset_bottom = 0.279999
+offset_left = 6.888
+offset_top = -1.04
+offset_right = 6.496
+offset_bottom = -0.720001
 text = "Ingredientes : 0/3 "
 
 [node name="HealthBar" type="ProgressBar" parent="UI"]
@@ -4857,12 +4877,10 @@ frame = 3
 frame_progress = 1.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Esqueleto"]
-visible = false
 position = Vector2(2, 0)
 shape = SubResource("CapsuleShape2D_2kawc")
 
 [node name="AttackArea" type="Area2D" parent="Esqueleto" groups=["enemy_attack"]]
-visible = false
 collision_layer = 10
 collision_mask = 5
 
@@ -4892,5 +4910,16 @@ shape = SubResource("CapsuleShape2D_131q3")
 [node name="AttackRayCast2D" type="RayCast2D" parent="Esqueleto"]
 target_position = Vector2(28, 0)
 collision_mask = 9
+
+[node name="SpawnArea" type="Area2D" parent="."]
+position = Vector2(996, 0)
+script = ExtResource("52_131q3")
+enemy_template = NodePath("../Esqueleto")
+ingredient = NodePath("../Ingredientes/Ingrediente3")
+spawn_points = Array[Vector2]([Vector2(-55, -8)])
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnArea"]
+position = Vector2(49, -27)
+shape = SubResource("RectangleShape2D_26280")
 
 [connection signal="body_entered" from="Esqueleto/DetectionArea" to="Esqueleto" method="_on_detecion_area_body_entered"]

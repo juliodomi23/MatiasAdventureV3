@@ -91,51 +91,64 @@ func attack():
 	can_attack = false
 	velocity = Vector2.ZERO
 	
+	# --- CORRECCIÓN CLAVE 1: Actualizar posición global del RayCast ANTES del ataque ---
+	attack_ray.global_position = global_position
+	print("📍 Posición global RayCast:", attack_ray.global_position)
+	
 	# Animación de ataque según dirección
 	if abs(attack_direction.x) > abs(attack_direction.y):
 		animated_sprite.flip_h = attack_direction.x < 0
 		animated_sprite.play("Attack_Side")
-		# Ajustar RayCast para ataque horizontal
 		attack_ray.target_position = Vector2(attack_range if !animated_sprite.flip_h else -attack_range, 0)
-
 	elif attack_direction.y < 0:
 		animated_sprite.play("Attack_Up")
-		# Ajustar RayCast para ataque vertical arriba
 		attack_ray.target_position = Vector2(0, -attack_range)
-
 	else:
 		animated_sprite.play("Attack_Down")
-		# Ajustar RayCast para ataque vertical abajo
 		attack_ray.target_position = Vector2(0, attack_range)
-		var shape = RectangleShape2D.new()
-		attack_ray.shape = shape
 	
-	print("🎯 Dirección ataque:", attack_ray.target_position)
-	
-	# Muestreo múltiple mejorado
+	# --- CORRECCIÓN CLAVE 2: Forzar múltiples actualizaciones del RayCast ---
 	var hit_confirmed = false
-	for i in range(1): 
+	for i in range(3):  # 3 intentos de detección
 		attack_ray.force_raycast_update()
 		
-		# Debug visual
-		var debug_pos = attack_ray.global_position
-		var debug_end = debug_pos + attack_ray.target_position
+		# Debug extendido
+		print("🎯 Intento %d - Dirección: %s | Target Pos: %s" % [
+			i+1, 
+			attack_direction, 
+			attack_ray.target_position
+		])
 		
 		if attack_ray.is_colliding():
 			var body = attack_ray.get_collider()
-			print("🔍 Intento", i+1, "| Colisión con:", body.name, "| Pos:", body.global_position)
+			print("🔍 Colisión detectada con:", body.name)
+			
 			if body.is_in_group("enemies"):
 				var dist = global_position.distance_to(body.global_position)
-				print("✅ Enemigo a distancia:", dist, "/", attack_range)
-				body.take_damage(attack_damage, global_position)
-				hit_confirmed = true
-				break
+				print("✅ ENEMIGO VÁLIDO - Distancia: %.1f (Rango: %.1f)" % [dist, attack_range])
+				
+				# --- CORRECCIÓN CLAVE 3: Verificar visibilidad del enemigo ---
+				if body.visible:
+					body.take_damage(attack_damage, global_position)
+					hit_confirmed = true
+					break
+				else:
+					print("⚠️ Enemigo oculto - No se aplica daño")
+		else:
+			print("❌ No hay colisión en intento", i+1)
 		
-		await get_tree().create_timer(0.02).timeout  # Reducido el delay entre chequeos
+		await get_tree().create_timer(0.03).timeout
 	
+	# --- NUEVO DEBUG VISUAL ---
 	if not hit_confirmed:
-		print("❌ No se detectó colisión con enemigos")
-		# Debug: Dibujar el área de ataque fallida
+		print("❌❌ ATAQUE FALLIDO - Posible causa:")
+	
+	# Cooldown
+	await get_tree().create_timer(attack_cooldown).timeout
+	
+	is_attacking = false
+	can_attack = true
+	animated_sprite.play("Idle")
 
 	
 	# Cooldown

@@ -93,9 +93,9 @@ func chasing_state(delta):
 	animated_sprite.play("walk")
 	
 	# Verificar rango de ataque
-	#if distance_to_player <= attack_range && can_attack && !attack_connecting:
-	#	current_state = State.ATTACKING
-	#	start_attack()
+	if distance_to_player <= attack_range && can_attack && !attack_connecting:
+		current_state = State.ATTACKING
+		start_attack()
 
 func attacking_state(delta):
 	if player_ref == null:
@@ -140,26 +140,15 @@ func take_damage(amount: int, source_position: Vector2 = Vector2.ZERO):
 		animated_sprite.play("walk")
 
 func die():
-	if is_dying:
-		return
+	if is_dying: return
 	
 	is_dying = true
 	set_physics_process(false)
-	detection_area.monitoring = false
-	hurtbox.monitoring = false
-	current_state = State.HURT
-	
-	# Detener cualquier animación previa
-	animated_sprite.stop()
-	
-	# Reproducir animación de muerte una sola vez
-	print("☠️ Esqueleto murió - Iniciando animación de muerte")
 	animated_sprite.play("die")
-	
-	# Esperar a que termine la animación antes de eliminar
 	await animated_sprite.animation_finished
-	print("✅ Animación de muerte completada")
-	queue_free()
+	
+	hide()
+	emit_signal("tree_exiting")  # Notifica a la zona
 
 func start_attack():
 	if player_ref == null or attack_connecting:
@@ -208,6 +197,20 @@ func start_attack():
 	attack_connecting = false
 	current_state = State.CHASING
 	attack_timer.start(attack_cooldown)
+	
+func reset_enemy():
+	health = 30
+	is_dying = false
+	current_state = State.IDLE
+	animated_sprite.play("idle")
+	
+	# Reactivar colisiones
+	$CollisionShape2D.disabled = false
+	$HurtBox/CollisionShape2D.disabled = false
+	
+	set_physics_process(true)
+	show()
+	print("[Esqueleto] Reiniciado - Colisiones activadas")
 
 ## SEÑALES ##
 func _on_detection_area_body_entered(body):
